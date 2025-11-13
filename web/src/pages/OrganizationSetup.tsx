@@ -41,22 +41,12 @@ export default function OrganizationSetup() {
     setError(null)
 
     try {
-      // Create or update profile without organization
+      // Profile should already exist from AuthCallback
+      // Just update full name if provided
       const existingProfile = await getCurrentProfile()
       
-      if (existingProfile) {
-        // Profile exists, just update full name if needed
-        if (formData.fullName && formData.fullName !== existingProfile.full_name) {
-          await updateProfile(user.id, { full_name: formData.fullName })
-        }
-      } else {
-        // Create new profile without organization
-        await createProfile({
-          userId: user.id,
-          email: user.email || '',
-          fullName: formData.fullName || user.user_metadata?.name || 'Unknown',
-          role: 'member',
-        })
+      if (existingProfile && formData.fullName && formData.fullName !== existingProfile.full_name) {
+        await updateProfile(user.id, { full_name: formData.fullName })
       }
 
       // Redirect to dashboard
