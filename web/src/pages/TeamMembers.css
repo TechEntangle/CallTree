@@ -307,6 +307,35 @@
   font-size: 18px;
 }
 
+/* Pending Users Section */
+.pending-users-section {
+  background: #fffbeb;
+  border: 2px solid #fbbf24;
+  border-radius: 12px;
+  padding: 32px;
+  margin-bottom: 32px;
+}
+
+.pending-users-section h2 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #92400e;
+  margin: 0 0 8px;
+}
+
+.section-description {
+  font-size: 14px;
+  color: #78350f;
+  margin: 0 0 24px;
+}
+
+.pending-users-table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
 /* Role Descriptions */
 .role-descriptions {
   background: white;

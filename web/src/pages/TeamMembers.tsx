@@ -12,6 +12,8 @@ import {
   getTeamStats,
   updateMemberRole,
   removeMemberFromOrganization,
+  getPendingUsers,
+  addUserToOrganization,
 } from '../lib/api/teamMembers'
 import type { Database } from '../../../shared/types/database.types'
 import './TeamMembers.css'
@@ -22,6 +24,7 @@ export default function TeamMembers() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [members, setMembers] = useState<Profile[]>([])
+  const [pendingUsers, setPendingUsers] = useState<Profile[]>([])
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null)
   const [stats, setStats] = useState({ total: 0, admins: 0, members: 0, viewers: 0 })
   const [loading, setLoading] = useState(true)
@@ -40,13 +43,15 @@ export default function TeamMembers() {
       }
 
       setCurrentProfile(profile)
-      const [membersData, statsData] = await Promise.all([
+      const [membersData, statsData, pendingData] = await Promise.all([
         getTeamMembers(profile.organization_id),
         getTeamStats(profile.organization_id),
+        getPendingUsers(),
       ])
 
       setMembers(membersData)
       setStats(statsData)
+      setPendingUsers(pendingData)
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -85,6 +90,22 @@ export default function TeamMembers() {
       alert('✅ Member removed successfully')
     } catch (err: any) {
       alert(`Error removing member: ${err.message}`)
+    }
+  }
+
+  async function handleAddToOrganization(userId: string, userName: string, role: 'admin' | 'member' | 'viewer' = 'member') {
+    if (!currentProfile?.organization_id) return
+
+    if (!confirm(`Add "${userName}" to your organization as ${role}?`)) {
+      return
+    }
+
+    try {
+      await addUserToOrganization(userId, currentProfile.organization_id, role)
+      await loadTeamData()
+      alert(`✅ ${userName} added successfully as ${role}!`)
+    } catch (err: any) {
+      alert(`Error adding user: ${err.message}`)
     }
   }
 
@@ -266,6 +287,75 @@ export default function TeamMembers() {
           </tbody>
         </table>
       </div>
+
+      {/* Pending Users Section */}
+      {isAdmin && pendingUsers.length > 0 && (
+        <div className="pending-users-section">
+          <h2>Pending Users ({pendingUsers.length})</h2>
+          <p className="section-description">
+            These users have signed up but haven't been added to any organization yet.
+            You can add them to your organization.
+          </p>
+
+          <div className="pending-users-table-container">
+            <table className="members-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Joined</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingUsers.map((pendingUser) => (
+                  <tr key={pendingUser.id}>
+                    <td>
+                      <div className="member-info">
+                        <div className="member-avatar">
+                          {pendingUser.full_name?.charAt(0) || '?'}
+                        </div>
+                        <div>
+                          <div className="member-name">
+                            {pendingUser.full_name || 'Unknown User'}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="member-email">{pendingUser.email}</td>
+                    <td className="member-date">
+                      {new Date(pendingUser.created_at).toLocaleDateString()}
+                    </td>
+                    <td>
+                      <div className="member-actions">
+                        <select
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              handleAddToOrganization(
+                                pendingUser.id,
+                                pendingUser.full_name || 'this user',
+                                e.target.value as 'admin' | 'member' | 'viewer'
+                              )
+                              e.target.value = '' // Reset
+                            }
+                          }}
+                          className="role-select"
+                          defaultValue=""
+                        >
+                          <option value="" disabled>Add as...</option>
+                          <option value="admin">Admin</option>
+                          <option value="member">Member</option>
+                          <option value="viewer">Viewer</option>
+                        </select>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Role Descriptions */}
       <div className="role-descriptions">

@@ -99,3 +99,39 @@ export async function isUserAdmin(userId: string): Promise<boolean> {
   return profile?.role === 'admin'
 }
 
+/**
+ * Get all users without an organization (pending users)
+ */
+export async function getPendingUsers(): Promise<Profile[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .is('organization_id', null)
+    .order('created_at', { ascending: true })
+
+  if (error) throw error
+  return data || []
+}
+
+/**
+ * Add a user to an organization
+ */
+export async function addUserToOrganization(
+  userId: string,
+  organizationId: string,
+  role: 'admin' | 'member' | 'viewer' = 'member'
+): Promise<Profile> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({
+      organization_id: organizationId,
+      role: role,
+    })
+    .eq('id', userId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
