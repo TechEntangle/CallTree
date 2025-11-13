@@ -75,3 +75,6 @@ web-build/
 *.tmp
 .cache/
 
+
+# Supabase CLI temp files
+.temp/
