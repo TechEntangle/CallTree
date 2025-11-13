@@ -24,12 +24,20 @@ export default function AuthCallback() {
         if (!profile) {
           // Create profile automatically
           console.log('Creating profile for new user:', session.user.email)
-          await createProfile({
-            userId: session.user.id,
-            email: session.user.email || '',
-            fullName: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User',
-            role: 'member',
-          })
+          try {
+            await createProfile({
+              userId: session.user.id,
+              email: session.user.email || '',
+              fullName: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User',
+              role: 'member',
+            })
+          } catch (createErr: any) {
+            // If duplicate key error, profile already exists - that's OK
+            if (createErr.code !== '23505') {
+              throw createErr
+            }
+            console.log('Profile already exists, continuing...')
+          }
         }
 
         // Redirect to dashboard
