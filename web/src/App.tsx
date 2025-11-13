@@ -5,6 +5,7 @@ import AuthCallback from './pages/AuthCallback'
 import Dashboard from './pages/Dashboard'
 import OrganizationSetup from './pages/OrganizationSetup'
 import CallingTrees from './pages/CallingTrees'
+import CreateTree from './pages/CreateTree'
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -109,6 +110,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <CallingTrees />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/trees/new"
+            element={
+              <ProtectedRoute>
+                <CreateTree />
               </ProtectedRoute>
             }
           />
