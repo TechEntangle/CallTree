@@ -123,6 +123,13 @@ export default function Dashboard() {
           </div>
           
           <div className="status-grid">
+            <div className="status-item clickable" onClick={() => navigate('/trees')}>
+              <div className="status-icon">🌳</div>
+              <div>
+                <h3>Calling Trees</h3>
+                <p>Build emergency hierarchies →</p>
+              </div>
+            </div>
             <div className="status-item">
               <div className="status-icon">✅</div>
               <div>
@@ -140,13 +147,6 @@ export default function Dashboard() {
             <div className="status-item">
               <div className="status-icon">⏳</div>
               <div>
-                <h3>Calling Trees</h3>
-                <p>Coming next</p>
-              </div>
-            </div>
-            <div className="status-item">
-              <div className="status-icon">⏳</div>
-              <div>
                 <h3>Notifications</h3>
                 <p>Coming soon</p>
               </div>
@@ -154,13 +154,23 @@ export default function Dashboard() {
           </div>
 
           <div className="next-steps">
-            <h3>Next Steps:</h3>
-            <ol>
-              <li>Create your organization profile</li>
-              <li>Invite team members</li>
-              <li>Build your first calling tree</li>
-              <li>Test emergency notifications</li>
-            </ol>
+            <h3>Quick Actions:</h3>
+            <div className="quick-actions">
+              <button onClick={() => navigate('/trees')} className="action-btn">
+                <span>🌳</span>
+                <div>
+                  <strong>Manage Trees</strong>
+                  <p>View and create calling trees</p>
+                </div>
+              </button>
+              <button onClick={() => navigate('/trees/new')} className="action-btn">
+                <span>✨</span>
+                <div>
+                  <strong>Create New Tree</strong>
+                  <p>Build an emergency hierarchy</p>
+                </div>
+              </button>
+            </div>
           </div>
 
           <div className="user-info">

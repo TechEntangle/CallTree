@@ -4,6 +4,7 @@ import Login from './pages/Login'
 import AuthCallback from './pages/AuthCallback'
 import Dashboard from './pages/Dashboard'
 import OrganizationSetup from './pages/OrganizationSetup'
+import CallingTrees from './pages/CallingTrees'
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -100,6 +101,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/trees"
+            element={
+              <ProtectedRoute>
+                <CallingTrees />
               </ProtectedRoute>
             }
           />
