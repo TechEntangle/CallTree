@@ -7,6 +7,50 @@
   justify-content: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 20px;
+  position: relative;
+}
+
+/* Logout Button */
+.logout-btn-setup {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  backdrop-filter: blur(10px);
+  z-index: 10;
+}
+
+.logout-btn-setup:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Back Button */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: #f3f4f6;
+  color: #667eea;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 16px;
+}
+
+.back-btn:hover {
+  background: #e5e7eb;
 }
 
 .org-setup-card {
@@ -255,6 +299,74 @@
 .secondary-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Choice Container */
+.choice-container {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  justify-content: center;
+  margin: 32px 0;
+}
+
+.choice-option {
+  flex: 1;
+  max-width: 300px;
+  text-align: center;
+  padding: 32px 24px;
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.choice-option:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.choice-icon-large {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.choice-option h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 12px;
+}
+
+.choice-option p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.choice-divider {
+  font-size: 16px;
+  font-weight: 600;
+  color: #9ca3af;
+}
+
+.choice-divider span {
+  display: inline-block;
+  padding: 8px 16px;
+  background: #e5e7eb;
+  border-radius: 20px;
+}
+
+.error-message {
+  margin-top: 24px;
+  padding: 16px;
+  background: #fee2e2;
+  border: 1px solid #f87171;
+  border-radius: 8px;
+  color: #991b1b;
+  font-size: 14px;
+  text-align: center;
 }
 
 /* Responsive */

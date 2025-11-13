@@ -22,13 +22,6 @@ export default function Dashboard() {
     async function checkProfile() {
       try {
         const userProfile = await getCurrentProfile()
-        
-        if (!userProfile || !userProfile.organization_id) {
-          // No profile or no organization - redirect to setup
-          navigate('/setup', { replace: true })
-          return
-        }
-        
         setProfile(userProfile)
       } catch (error) {
         console.error('Error loading profile:', error)
@@ -110,6 +103,33 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <main className="dashboard-main">
+        {!profile?.organization_id ? (
+          /* No Organization State */
+          <div className="waiting-card" style={{ textAlign: 'center', maxWidth: '600px', margin: '64px auto' }}>
+            <div style={{ fontSize: '64px', marginBottom: '24px' }}>⏳</div>
+            <h2>Waiting for Organization Access</h2>
+            <p style={{ marginBottom: '32px', color: '#6b7280' }}>
+              Your account has been created successfully! Please wait for an administrator
+              to add you to their organization, or create your own organization.
+            </p>
+            <button
+              onClick={() => navigate('/setup')}
+              style={{
+                padding: '12px 24px',
+                background: '#667eea',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer',
+              }}
+            >
+              Create New Organization
+            </button>
+          </div>
+        ) : (
+          <>
         <div className="welcome-card">
           <h2>Welcome back, {profile?.full_name?.split(' ')[0] || 'there'}! 🎉</h2>
           <p>
@@ -185,6 +205,8 @@ export default function Dashboard() {
             <pre>{JSON.stringify(user, null, 2)}</pre>
           </div>
         </div>
+        </>
+        )}
       </main>
     </div>
   )

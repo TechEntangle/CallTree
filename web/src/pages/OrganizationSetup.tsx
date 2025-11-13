@@ -6,19 +6,20 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
+import { supabase } from '../lib/supabase'
 import {
   createOrganization,
   generateSlug,
   checkSlugAvailable,
 } from '../lib/api/organizations'
-import { createProfile } from '../lib/api/profiles'
+import { createProfile, getCurrentProfile, updateProfile } from '../lib/api/profiles'
 import './OrganizationSetup.css'
 
 export default function OrganizationSetup() {
   const { user } = useAuth()
   const navigate = useNavigate()
   
-  const [step, setStep] = useState<'welcome' | 'create'>('welcome')
+  const [step, setStep] = useState<'choice' | 'welcome' | 'create'>('choice')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
@@ -27,6 +28,44 @@ export default function OrganizationSetup() {
     slug: '',
     fullName: user?.user_metadata?.full_name || '',
   })
+
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    navigate('/login')
+  }
+
+  async function handleSkipOrganization() {
+    if (!user) return
+    
+    setLoading(true)
+    setError(null)
+
+    try {
+      // Create or update profile without organization
+      const existingProfile = await getCurrentProfile()
+      
+      if (existingProfile) {
+        // Profile exists, just update full name if needed
+        if (formData.fullName && formData.fullName !== existingProfile.full_name) {
+          await updateProfile(user.id, { full_name: formData.fullName })
+        }
+      } else {
+        // Create new profile without organization
+        await createProfile({
+          userId: user.id,
+          email: user.email || '',
+          fullName: formData.fullName || user.user_metadata?.name || 'Unknown',
+          role: 'member',
+        })
+      }
+
+      // Redirect to dashboard
+      navigate('/dashboard')
+    } catch (err: any) {
+      setError(err.message)
+      setLoading(false)
+    }
+  }
   
   const [slugChecking, setSlugChecking] = useState(false)
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null)
@@ -102,10 +141,79 @@ export default function OrganizationSetup() {
     }
   }
 
+  // Show choice screen
+  if (step === 'choice') {
+    return (
+      <div className="org-setup-container">
+        <button onClick={handleSignOut} className="logout-btn-setup">
+          Sign Out
+        </button>
+        
+        <div className="org-setup-card">
+          <div className="org-setup-header">
+            <div className="logo">🌳</div>
+            <h1>Welcome to CallTree!</h1>
+            <p className="subtitle">
+              How would you like to proceed?
+            </p>
+          </div>
+
+          <div className="welcome-content">
+            <div className="choice-container">
+              <div className="choice-option">
+                <div className="choice-icon-large">🏢</div>
+                <h3>Create New Organization</h3>
+                <p>Start a new organization and invite your team</p>
+                <button
+                  onClick={() => setStep('welcome')}
+                  className="primary-button"
+                >
+                  Create Organization
+                </button>
+              </div>
+
+              <div className="choice-divider">
+                <span>OR</span>
+              </div>
+
+              <div className="choice-option">
+                <div className="choice-icon-large">👤</div>
+                <h3>Join Existing Organization</h3>
+                <p>Skip and wait for an admin to add you</p>
+                <button
+                  onClick={handleSkipOrganization}
+                  className="secondary-button"
+                  disabled={loading}
+                >
+                  {loading ? 'Saving...' : 'Skip for Now'}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div className="error-message">
+                ⚠️ {error}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show welcome/intro screen
   if (step === 'welcome') {
     return (
       <div className="org-setup-container">
+        <button onClick={handleSignOut} className="logout-btn-setup">
+          Sign Out
+        </button>
+        
         <div className="org-setup-card">
+          <button onClick={() => setStep('choice')} className="back-btn">
+            ← Back
+          </button>
+          
           <div className="org-setup-header">
             <div className="logo">🌳</div>
             <h1>Welcome to CallTree!</h1>
@@ -160,7 +268,14 @@ export default function OrganizationSetup() {
 
   return (
     <div className="org-setup-container">
+      <button onClick={handleSignOut} className="logout-btn-setup">
+        Sign Out
+      </button>
+      
       <div className="org-setup-card">
+        <button onClick={() => setStep('choice')} className="back-btn">
+          ← Back
+        </button>
         <div className="org-setup-header">
           <div className="logo">🏢</div>
           <h1>Create Your Organization</h1>
