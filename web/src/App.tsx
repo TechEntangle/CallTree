@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './lib/AuthContext'
 import Login from './pages/Login'
 import AuthCallback from './pages/AuthCallback'
 import Dashboard from './pages/Dashboard'
+import OrganizationSetup from './pages/OrganizationSetup'
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -86,6 +87,14 @@ function App() {
           <Route path="/auth/callback" element={<AuthCallback />} />
 
           {/* Protected Routes */}
+          <Route
+            path="/setup"
+            element={
+              <ProtectedRoute>
+                <OrganizationSetup />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/dashboard"
             element={
