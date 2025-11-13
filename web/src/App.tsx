@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard'
 import OrganizationSetup from './pages/OrganizationSetup'
 import CallingTrees from './pages/CallingTrees'
 import CreateTree from './pages/CreateTree'
+import TreeBuilder from './pages/TreeBuilder'
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -118,6 +119,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <CreateTree />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/trees/:treeId"
+            element={
+              <ProtectedRoute>
+                <TreeBuilder />
               </ProtectedRoute>
             }
           />
