@@ -1,3 +1,5 @@
+
+
 -- Row Level Security (RLS) Policies
 -- This ensures users can only access data from their organization
 

@@ -123,6 +123,13 @@ export default function Dashboard() {
           </div>
           
           <div className="status-grid">
+            <div className="status-item clickable" onClick={() => navigate('/team')}>
+              <div className="status-icon">👥</div>
+              <div>
+                <h3>Team Members</h3>
+                <p>Manage your team →</p>
+              </div>
+            </div>
             <div className="status-item clickable" onClick={() => navigate('/trees')}>
               <div className="status-icon">🌳</div>
               <div>
@@ -138,13 +145,6 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="status-item">
-              <div className="status-icon">✅</div>
-              <div>
-                <h3>Authentication</h3>
-                <p>Google OAuth working</p>
-              </div>
-            </div>
-            <div className="status-item">
               <div className="status-icon">⏳</div>
               <div>
                 <h3>Notifications</h3>
@@ -156,6 +156,13 @@ export default function Dashboard() {
           <div className="next-steps">
             <h3>Quick Actions:</h3>
             <div className="quick-actions">
+              <button onClick={() => navigate('/team')} className="action-btn">
+                <span>👥</span>
+                <div>
+                  <strong>View Team</strong>
+                  <p>Manage team members and roles</p>
+                </div>
+              </button>
               <button onClick={() => navigate('/trees')} className="action-btn">
                 <span>🌳</span>
                 <div>

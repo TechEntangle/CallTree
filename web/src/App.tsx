@@ -7,6 +7,7 @@ import OrganizationSetup from './pages/OrganizationSetup'
 import CallingTrees from './pages/CallingTrees'
 import CreateTree from './pages/CreateTree'
 import TreeBuilder from './pages/TreeBuilder'
+import TeamMembers from './pages/TeamMembers'
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -127,6 +128,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <TreeBuilder />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/team"
+            element={
+              <ProtectedRoute>
+                <TeamMembers />
               </ProtectedRoute>
             }
           />
