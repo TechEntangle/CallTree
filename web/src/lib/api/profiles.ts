@@ -21,13 +21,10 @@ export async function getCurrentProfile(): Promise<Profile | null> {
     .from('profiles')
     .select('*')
     .eq('id', user.id)
-    .single()
+    .maybeSingle() // Use maybeSingle() instead of single() to handle no results gracefully
 
-  if (error) {
-    if (error.code === 'PGRST116') return null // Not found
-    throw error
-  }
-  return data
+  if (error) throw error
+  return data // Will be null if no profile exists
 }
 
 /**

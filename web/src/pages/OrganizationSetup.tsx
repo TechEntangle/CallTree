@@ -230,7 +230,7 @@ export default function OrganizationSetup() {
                   setFormData({ ...formData, slug: e.target.value })
                 }
                 placeholder="acme-corp"
-                pattern="[a-z0-9-]+"
+                pattern="[a-z0-9\-]+"
                 required
                 disabled={loading}
               />
