@@ -1,27 +1,63 @@
-/**
- * OAuth Callback Handler
- * Handles the redirect after Google/Apple sign-in
- */
-
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { getCurrentProfile, createProfile } from '../lib/api/profiles'
 
 export default function AuthCallback() {
   const navigate = useNavigate()
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Get the session from the URL hash
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        // Redirect to dashboard after successful sign-in
+    async function handleAuthCallback() {
+      try {
+        // Get the current session
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (!session) {
+          navigate('/login', { replace: true })
+          return
+        }
+
+        // Check if profile exists
+        const profile = await getCurrentProfile()
+        
+        if (!profile) {
+          // Create profile automatically
+          console.log('Creating profile for new user:', session.user.email)
+          await createProfile({
+            userId: session.user.id,
+            email: session.user.email || '',
+            fullName: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User',
+            role: 'member',
+          })
+        }
+
+        // Redirect to dashboard
         navigate('/dashboard', { replace: true })
-      } else {
-        // If no session, redirect to login
-        navigate('/login', { replace: true })
+      } catch (err: any) {
+        console.error('Error in auth callback:', err)
+        setError(err.message)
       }
-    })
+    }
+
+    handleAuthCallback()
   }, [navigate])
+
+  if (error) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        gap: '16px',
+      }}>
+        <p style={{ color: '#ef4444' }}>Error: {error}</p>
+        <button onClick={() => navigate('/login')}>Back to Login</button>
+      </div>
+    )
+  }
 
   return (
     <div style={{
@@ -29,30 +65,8 @@ export default function AuthCallback() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
     }}>
-      <div style={{
-        textAlign: 'center',
-        color: 'white'
-      }}>
-        <div style={{
-          width: '48px',
-          height: '48px',
-          border: '4px solid rgba(255,255,255,0.3)',
-          borderTopColor: 'white',
-          borderRadius: '50%',
-          margin: '0 auto 20px',
-          animation: 'spin 1s linear infinite'
-        }} />
-        <h2>Signing you in...</h2>
-        <p>Please wait a moment</p>
-      </div>
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
+      <p>Completing sign in...</p>
     </div>
   )
 }
-
