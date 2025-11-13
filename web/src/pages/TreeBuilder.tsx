@@ -11,8 +11,11 @@ import {
   updateCallingTree,
   activateCallingTree,
   archiveCallingTree,
+  createTreeNode,
+  deleteTreeNode,
 } from '../lib/api/callingTrees'
 import { getCurrentProfile } from '../lib/api/profiles'
+import { getTeamMembers } from '../lib/api/teamMembers'
 import type { Database } from '../../../shared/types/database.types'
 import './TreeBuilder.css'
 
@@ -25,10 +28,14 @@ export default function TreeBuilder() {
   const navigate = useNavigate()
 
   const [tree, setTree] = useState<CallingTree | null>(null)
-  const [nodes, setNodes] = useState<TreeNode[]>([])
+  const [nodes, setNodes] = useState<any[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [teamMembers, setTeamMembers] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showAddMember, setShowAddMember] = useState(false)
+  const [selectedMember, setSelectedMember] = useState<string>('')
+  const [selectedLevel, setSelectedLevel] = useState<number>(1)
 
   useEffect(() => {
     loadTreeData()
@@ -42,10 +49,17 @@ export default function TreeBuilder() {
     }
 
     try {
-      const [treeData, nodesData, profileData] = await Promise.all([
+      const profileData = await getCurrentProfile()
+      if (!profileData?.organization_id) {
+        setError('No organization found')
+        setLoading(false)
+        return
+      }
+
+      const [treeData, nodesData, membersData] = await Promise.all([
         getCallingTree(treeId),
         getTreeNodes(treeId),
-        getCurrentProfile(),
+        getTeamMembers(profileData.organization_id),
       ])
 
       if (!treeData) {
@@ -57,6 +71,7 @@ export default function TreeBuilder() {
       setTree(treeData)
       setNodes(nodesData)
       setProfile(profileData)
+      setTeamMembers(membersData)
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -96,6 +111,61 @@ export default function TreeBuilder() {
       alert(`Error archiving tree: ${err.message}`)
     }
   }
+
+  async function handleAddMember() {
+    if (!treeId || !selectedMember) return
+
+    try {
+      // Get the next position for this level
+      const nodesAtLevel = nodes.filter((n) => n.level === selectedLevel)
+      const nextPosition = nodesAtLevel.length
+
+      await createTreeNode({
+        treeId,
+        userId: selectedMember,
+        level: selectedLevel,
+        position: nextPosition,
+      })
+
+      // Reload tree data
+      await loadTreeData()
+      
+      // Reset form
+      setShowAddMember(false)
+      setSelectedMember('')
+      setSelectedLevel(1)
+      
+      alert('✅ Member added to tree!')
+    } catch (err: any) {
+      alert(`Error adding member: ${err.message}`)
+    }
+  }
+
+  async function handleRemoveNode(nodeId: string) {
+    if (!confirm('Remove this member from the tree?')) return
+
+    try {
+      await deleteTreeNode(nodeId)
+      await loadTreeData()
+      alert('✅ Member removed from tree!')
+    } catch (err: any) {
+      alert(`Error removing member: ${err.message}`)
+    }
+  }
+
+  // Get members not yet in the tree
+  const availableMembers = teamMembers.filter(
+    (member) => !nodes.some((node) => node.user_id === member.id)
+  )
+
+  // Group nodes by level
+  const nodesByLevel = nodes.reduce((acc: any, node: any) => {
+    if (!acc[node.level]) acc[node.level] = []
+    acc[node.level].push(node)
+    return acc
+  }, {})
+
+  const maxLevel = Math.max(0, ...nodes.map((n) => n.level))
 
   if (loading) {
     return (
@@ -186,38 +256,157 @@ export default function TreeBuilder() {
 
       {/* Main Content */}
       <div className="tree-builder-content">
-        {nodes.length === 0 ? (
-          /* Empty State */
-          <div className="empty-tree-state">
-            <div className="empty-icon">🌱</div>
-            <h2>No Team Members Added Yet</h2>
-            <p>
-              Start building your calling tree by adding team members and
-              organizing them into notification levels
-            </p>
-            <button
-              onClick={() => alert('Add member feature coming soon!')}
-              className="btn-primary"
-            >
-              + Add First Member
-            </button>
+        <div className="tree-builder-grid">
+          {/* Left Side - Tree Structure */}
+          <div className="tree-structure-panel">
+            <div className="panel-header">
+              <h3>Tree Structure</h3>
+              <button
+                onClick={() => setShowAddMember(true)}
+                className="btn-primary-small"
+                disabled={availableMembers.length === 0}
+              >
+                + Add Member
+              </button>
+            </div>
+
+            {nodes.length === 0 ? (
+              <div className="empty-tree-state">
+                <div className="empty-icon">🌱</div>
+                <h4>No Members Yet</h4>
+                <p>Add team members to start building your calling tree</p>
+              </div>
+            ) : (
+              <div className="tree-levels">
+                {Array.from({ length: maxLevel }).map((_, index) => {
+                  const level = index + 1
+                  const levelNodes = nodesByLevel[level] || []
+                  
+                  return (
+                    <div key={level} className="tree-level">
+                      <div className="level-header">
+                        <span className="level-badge">Level {level}</span>
+                        <span className="level-count">{levelNodes.length} {levelNodes.length === 1 ? 'member' : 'members'}</span>
+                      </div>
+                      <div className="level-nodes">
+                        {levelNodes.map((node: any) => (
+                          <div key={node.id} className="tree-node-card">
+                            <div className="node-avatar">
+                              {node.user?.full_name?.charAt(0) || '?'}
+                            </div>
+                            <div className="node-info">
+                              <div className="node-name">{node.user?.full_name || 'Unknown'}</div>
+                              <div className="node-email">{node.user?.email}</div>
+                            </div>
+                            <button
+                              onClick={() => handleRemoveNode(node.id)}
+                              className="btn-remove-node"
+                              title="Remove"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
-        ) : (
-          /* Tree Visualization */
-          <div className="tree-visualization">
-            <h3>Tree Structure (Coming Soon)</h3>
-            <p>Visual tree builder will be displayed here</p>
-            <div className="nodes-preview">
-              {nodes.map((node) => (
-                <div key={node.id} className="node-preview">
-                  <span>Level {node.level}</span>
-                  <span>Position {node.position}</span>
-                </div>
-              ))}
+
+          {/* Right Side - Available Members */}
+          <div className="available-members-panel">
+            <div className="panel-header">
+              <h3>Available Members</h3>
+              <span className="member-count">{availableMembers.length}</span>
+            </div>
+
+            {availableMembers.length === 0 ? (
+              <div className="no-members-state">
+                <p>✅ All team members are in the tree!</p>
+              </div>
+            ) : (
+              <div className="members-list">
+                {availableMembers.map((member) => (
+                  <div key={member.id} className="member-card">
+                    <div className="member-avatar">
+                      {member.full_name?.charAt(0) || '?'}
+                    </div>
+                    <div className="member-info">
+                      <div className="member-name">{member.full_name || 'Unknown'}</div>
+                      <div className="member-role">{member.role}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Add Member Modal */}
+      {showAddMember && (
+        <div className="modal-overlay" onClick={() => setShowAddMember(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Add Member to Tree</h3>
+              <button onClick={() => setShowAddMember(false)} className="modal-close">
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Select Member</label>
+                <select
+                  value={selectedMember}
+                  onChange={(e) => setSelectedMember(e.target.value)}
+                  className="form-select"
+                >
+                  <option value="">Choose a member...</option>
+                  {availableMembers.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.full_name} ({member.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Notification Level</label>
+                <select
+                  value={selectedLevel}
+                  onChange={(e) => setSelectedLevel(parseInt(e.target.value))}
+                  className="form-select"
+                >
+                  {Array.from({ length: Math.max(5, maxLevel + 1) }).map((_, index) => (
+                    <option key={index + 1} value={index + 1}>
+                      Level {index + 1} {index === 0 && '(First to be notified)'}
+                    </option>
+                  ))}
+                </select>
+                <p className="field-hint">
+                  Level 1 members are notified first. If they don't respond, Level 2 is notified, and so on.
+                </p>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button onClick={() => setShowAddMember(false)} className="btn-secondary">
+                Cancel
+              </button>
+              <button
+                onClick={handleAddMember}
+                className="btn-primary"
+                disabled={!selectedMember}
+              >
+                Add to Tree
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
