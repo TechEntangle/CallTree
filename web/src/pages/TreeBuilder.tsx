@@ -16,6 +16,7 @@ import {
 } from '../lib/api/callingTrees'
 import { getCurrentProfile } from '../lib/api/profiles'
 import { getTeamMembers } from '../lib/api/teamMembers'
+import { triggerNotification } from '../lib/api/notifications'
 import type { Database } from '../../../shared/types/database.types'
 import './TreeBuilder.css'
 
@@ -36,6 +37,11 @@ export default function TreeBuilder() {
   const [showAddMember, setShowAddMember] = useState(false)
   const [selectedMember, setSelectedMember] = useState<string>('')
   const [selectedLevel, setSelectedLevel] = useState<number>(1)
+  const [showNotificationModal, setShowNotificationModal] = useState(false)
+  const [notificationTitle, setNotificationTitle] = useState('')
+  const [notificationMessage, setNotificationMessage] = useState('')
+  const [notificationPriority, setNotificationPriority] = useState<'low' | 'medium' | 'high' | 'critical'>('high')
+  const [sending, setSending] = useState(false)
 
   useEffect(() => {
     loadTreeData()
@@ -153,6 +159,47 @@ export default function TreeBuilder() {
     }
   }
 
+  async function handleSendNotification() {
+    if (!treeId || !notificationTitle || !notificationMessage) {
+      alert('Please fill in all fields')
+      return
+    }
+
+    if (nodes.length === 0) {
+      alert('Cannot send notification: Tree has no members')
+      return
+    }
+
+    setSending(true)
+    try {
+      const { data, error } = await triggerNotification(
+        treeId,
+        notificationTitle,
+        notificationMessage,
+        notificationPriority
+      )
+
+      if (error) throw error
+
+      // Reset form
+      setShowNotificationModal(false)
+      setNotificationTitle('')
+      setNotificationMessage('')
+      setNotificationPriority('high')
+
+      alert('🚨 Emergency notification sent successfully!')
+      
+      // Navigate to notification status page
+      if (data) {
+        navigate(`/notifications/${data}`)
+      }
+    } catch (err: any) {
+      alert(`Error sending notification: ${err.message}`)
+    } finally {
+      setSending(false)
+    }
+  }
+
   // Get members not yet in the tree
   const availableMembers = teamMembers.filter(
     (member) => !nodes.some((node) => node.user_id === member.id)
@@ -221,9 +268,18 @@ export default function TreeBuilder() {
             </button>
           )}
           {tree.status === 'active' && (
-            <button onClick={handleArchive} className="btn-warning">
-              Archive Tree
-            </button>
+            <>
+              <button 
+                onClick={() => setShowNotificationModal(true)} 
+                className="btn-emergency"
+                disabled={nodes.length === 0}
+              >
+                🚨 Send Emergency Notification
+              </button>
+              <button onClick={handleArchive} className="btn-warning">
+                Archive Tree
+              </button>
+            </>
           )}
           <button
             onClick={() => navigate(`/trees/${treeId}/edit`)}
@@ -402,6 +458,100 @@ export default function TreeBuilder() {
                 disabled={!selectedMember}
               >
                 Add to Tree
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Send Notification Modal */}
+      {showNotificationModal && (
+        <div className="modal-overlay" onClick={() => setShowNotificationModal(false)}>
+          <div className="modal-content notification-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <h3>🚨 Send Emergency Notification</h3>
+                <p className="modal-subtitle">
+                  This will notify all {nodes.length} members in the calling tree
+                </p>
+              </div>
+              <button onClick={() => setShowNotificationModal(false)} className="modal-close">
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Title *</label>
+                <input
+                  type="text"
+                  value={notificationTitle}
+                  onChange={(e) => setNotificationTitle(e.target.value)}
+                  placeholder="e.g., Building Evacuation Required"
+                  className="form-input"
+                  maxLength={255}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Message *</label>
+                <textarea
+                  value={notificationMessage}
+                  onChange={(e) => setNotificationMessage(e.target.value)}
+                  placeholder="Provide clear instructions for the emergency situation..."
+                  className="form-textarea"
+                  rows={6}
+                />
+                <p className="field-hint">
+                  Be clear and concise. Include what happened, what actions to take, and any relevant details.
+                </p>
+              </div>
+
+              <div className="form-group">
+                <label>Priority</label>
+                <select
+                  value={notificationPriority}
+                  onChange={(e) => setNotificationPriority(e.target.value as any)}
+                  className="form-select"
+                >
+                  <option value="low">🟢 Low - Informational</option>
+                  <option value="medium">🟡 Medium - Important</option>
+                  <option value="high">🟠 High - Urgent</option>
+                  <option value="critical">🔴 Critical - Life-threatening</option>
+                </select>
+              </div>
+
+              <div className="notification-preview">
+                <div className="preview-label">How it will be sent:</div>
+                <ol className="notification-flow">
+                  <li>
+                    <strong>Level 0</strong> members will be notified immediately
+                  </li>
+                  <li>
+                    If they don't respond within <strong>{Math.floor(tree.timeout_seconds / 60)} minutes</strong>, 
+                    notification escalates to Level 1
+                  </li>
+                  <li>
+                    Process continues through all {maxLevel + 1} levels until someone responds
+                  </li>
+                </ol>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button 
+                onClick={() => setShowNotificationModal(false)} 
+                className="btn-secondary"
+                disabled={sending}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSendNotification}
+                className="btn-emergency"
+                disabled={!notificationTitle || !notificationMessage || sending}
+              >
+                {sending ? 'Sending...' : '🚨 Send Emergency Notification'}
               </button>
             </div>
           </div>

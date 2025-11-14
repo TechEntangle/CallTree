@@ -8,6 +8,8 @@ import CallingTrees from './pages/CallingTrees'
 import CreateTree from './pages/CreateTree'
 import TreeBuilder from './pages/TreeBuilder'
 import TeamMembers from './pages/TeamMembers'
+import NotificationStatus from './pages/NotificationStatus'
+import NotificationHistory from './pages/NotificationHistory'
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -136,6 +138,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <TeamMembers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <NotificationHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications/:notificationId"
+            element={
+              <ProtectedRoute>
+                <NotificationStatus />
               </ProtectedRoute>
             }
           />

@@ -164,11 +164,11 @@ export default function Dashboard() {
                 <p>8 tables with RLS</p>
               </div>
             </div>
-            <div className="status-item">
-              <div className="status-icon">⏳</div>
+            <div className="status-item clickable" onClick={() => navigate('/notifications')}>
+              <div className="status-icon">🔔</div>
               <div>
                 <h3>Notifications</h3>
-                <p>Coming soon</p>
+                <p>View emergency history →</p>
               </div>
             </div>
           </div>
@@ -195,6 +195,13 @@ export default function Dashboard() {
                 <div>
                   <strong>Create New Tree</strong>
                   <p>Build an emergency hierarchy</p>
+                </div>
+              </button>
+              <button onClick={() => navigate('/notifications')} className="action-btn">
+                <span>🔔</span>
+                <div>
+                  <strong>View Notifications</strong>
+                  <p>Emergency notification history</p>
                 </div>
               </button>
             </div>
